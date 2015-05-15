@@ -79,7 +79,7 @@ where $R_7$ is the number of accepted visitation referrals (`vrf.fl_accepted = 1
 * Participant Type
 * Provider
 
-## IPM3: Clustered Variability of Visitation Timing
+## IPM3: Visitation Regularity 
 
 ### Questions That This Measure Can Answer
 
@@ -89,7 +89,9 @@ How much variation exists in the timing of visitations?
 
 Stable or Decreasing
 
-### Formal Definition
+### Formal Definition (UNDER REVISION)
+
+_The following text gives a general sense of what we are hoping to accomplish with this measure: an assessment of the regularity of visitations associated with a given referral. The time-series (i.e. cyclical) nature of the data we are dealing with requires some additional research. We welcome comments or recomendations on how to define this measurement._ 
 
 Given a universe of minutes $(M)$, where $M$ is any POSIX style minute, excluding minutes taking place between 0000 hours and 0800 hours in local time on a given day, the difference in visitation time $(\Delta T)$ from one completed visit $(T_i)$ to the next completed visit $(T_{i+1})$ shall be defined as the count of $M$ taking place between $T_i$ and $T_{i+1}$. 
 
@@ -149,7 +151,7 @@ Data collected based on the visit report form and other components of the oliver
 
 What percentage of referrals that have been submitted to a given provider are accepted by the provider? 
 
-### Normative Direction of the Measure Over Time
+#### Normative Direction of the Measure Over Time
 
 Stable or Increasing
 
@@ -193,7 +195,7 @@ This measure shall be calculated by first identifying all of the parents associa
 * Mode of Notification 
 * Provider
 
-### PPM3: Percentage of Parental Visit Attendance
+### PPM4: Percentage of Parental Visit Attendance
 
 #### Questions That This Measure Can Answer
 
@@ -206,6 +208,7 @@ Stable or Increasing
 #### Back of the Envelope Definition
 
 This measure shall be calculated by first taking the difference in expected parental visitation participants (as recorded on the referral) and the parental participants who participate in a given completed visitation session. This difference shall be divided by the expected parental visitation participants and then averaged across all completed visitations for a given provider. 
+
 #### Available Cross-Tabulations
 
 * Type of Visitation Supervision 
@@ -223,7 +226,7 @@ This measure shall be calculated by first taking the difference in expected pare
 * Activity Fee Usage 
 
 
-### PPM4: Percentage of Child Visit Attendance
+### PPM5: Percentage of Child Visit Attendance
 
 #### Questions That This Measure Can Answer
 
@@ -254,7 +257,7 @@ This measure shall be calculated by first taking the difference in expected chil
 * Activity Fee Usage 
 
 
-### PPM5: Percentage of Planned Participants Present
+### PPM6: Percentage of Planned Participants Present
 
 #### Questions That This Measure Can Answer
 
@@ -459,4 +462,9 @@ The following list of measures contains measures that summit participants identi
     + All
     + Some
     + None
+* Referral Acceptance Reason
+    + Accepted
+    + Rejected - Capacity Issues
+    + Rejected - Client Compatability Issues 
+    + Other 
 * Provider
