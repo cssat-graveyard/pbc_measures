@@ -1,0 +1,462 @@
+---
+title: "Performance Based Contracting Visitation Measurement Working Technical Documentation"
+output: word_document
+---
+
+# Overview 
+
+This document outlines the potential measurements identified at the first Performance Based Contracting Outcomes Summit (hereafter, "the summit") held in Spokane, Washington on May 1, 2015. This document is intended to serve as a working paper and should be viewed as a tool to facilitate further discussion in this matter. Some portions of the document should be read in conjunction with the [draft data dictionary](https://docs.google.com/spreadsheets/d/1dDojj0Am3AbhpNuiqU2a7MxeZr79dJ1frde6c45xYlM/edit?usp=sharing) for the oliver visitation application. 
+
+
+# Initial Performance Measures 
+
+The first three measurements in this document were identified at the summit as initial performance metrics. In other words, these measurements were identified as the mostly likely measures to be used for provider accountability purposes once the Family Impact Network (FIN) has collected a sufficient amount of data to begin quantitative performance monitoring. Given the relative importance of these measurements, they have been defined with more specificity and formality than other measurements listed in this document. Each of the measurements in this section contains a simple question that the measure should be able to answer, a proposed normative direction for the measure, a formal definition, and a list of proposed cross-tabulation dimensions for the measure. A complete list of all potential cross-tabulation dimensions is provided at the end of the document.  
+
+## IPM1: Average Duration of Visitation Scheduling
+
+### Questions That This Measure Can Answer
+
+How long does it take for a provider to schedule a visit?
+
+### Normative Direction of the Measure Over Time
+
+Stable or Decreasing
+
+### Formal Definition
+
+The average duration of visitation scheduling $(\overline{VS})$ shall be defined as the average number of days it takes for a provider to schedule a supported visitation session once the provider has received a referral from Children's Administration (CA). This measure will focus on all categories of visitation (but see available cross tabulations below). The measure shall be formally defined as    
+
+$$
+\overline{VS}=\frac{1}{n}\sum_{i=1}^nd_i 
+$$
+
+where $n$ represents the total number of referrals occurring during the reporting period where a scheduling actually took place and $d$ represents the count of days, as calculated by the MS-SQL `datediff()` function, between the receipt of the referral by the provider (`vrf.id_calendar_dim_rcvd`) and the first scheduled visitation session (`vf.id_calendar_dim_setup`). As scheduling of a visit implies that a provider has accepted a particular visitation referral, this serves as an implicit exclusion criterion. 
+
+### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Count of Children Associated with Visitation
+* Travel Distance Per Child to Visit Location 
+* Travel Duration Per Child to Visit Location 
+* Travel Distance from Most Distal Parent to Visit Location 
+* Travel Duration from Most Distal Parent to Visit Location 
+* Age of Children in the Visit 
+* Participant Type
+* Provider
+
+## IPM2: Percentage of Referred Visits Scheduled 
+
+### Questions That This Measure Can Answer
+
+What percentage of visitation referrals resulted in a scheduled visitation?
+
+### Normative Direction of the Measure Over Time
+
+Stable or Increasing
+
+### Formal Definition
+
+The percentage of referred visits scheduled $(P_{RS_7})$ shall be defined as proportion of all accepted visitation referrals that were received by the provider within seven days of the final date of a given reporting period, multiplied by 100. The measure shall be formally defined as
+
+$$
+P_{RS_7}=\frac{RS_7 \cdot 100}{R_7} 
+$$
+
+where $R_7$ is the number of accepted visitation referrals (`vrf.fl_accepted = 1`) in a given reporting period that were received by the provider within seven days of the final date of a given reporting period (e.g. `vrf.id_calendar_dim_rcvd < dateadd(dd, -7, end_of_quarter)`) and $RS_7$ is the number of accepted visitation referrals (`vrf.fl_accepted = 1`) in a given reporting period that were received by the provider within seven days of the final date of a given reporting period (e.g. `vrf.id_calendar_dim_rcvd < dateadd(dd, -7, end_of_quarter)`) which have an associated scheduled visitation (`vf.id_calendar_dim_setup != 0`). 
+
+
+### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Count of Children Associated with Visitation
+* Travel Distance Per Child to Visit Location 
+* Travel Duration Per Child to Visit Location 
+* Travel Distance from Most Distal Parent to Visit Location 
+* Travel Duration from Most Distal Parent to Visit Location 
+* Age of Children in the Visit 
+* Participant Type
+* Provider
+
+## IPM3: Clustered Variability of Visitation Timing
+
+### Questions That This Measure Can Answer
+
+How much variation exists in the timing of visitations?
+
+### Normative Direction of the Measure Over Time
+
+Stable or Decreasing
+
+### Formal Definition
+
+Given a universe of minutes $(M)$, where $M$ is any POSIX style minute, excluding minutes taking place between 0000 hours and 0800 hours in local time on a given day, the difference in visitation time $(\Delta T)$ from one completed visit $(T_i)$ to the next completed visit $(T_{i+1})$ shall be defined as the count of $M$ taking place between $T_i$ and $T_{i+1}$. 
+
+The mean $\Delta T$, $(\overline{\Delta T})$, for referral $j$ in a given time period shall be defined as 
+
+$$
+\overline{\Delta T_j}=\frac{1}{k}\sum_{i=1}^\Delta T_{j_i}
+$$
+
+where $k$ is the total number of visits taking place for household $j$ in a given time period. 
+
+The variability in an individual visit $(V)$ shall be given as 
+
+$$
+V = \Delta T_{j_i} - \overline{\Delta T_j}. 
+$$
+
+Given the above definitions, the clustered variability measure $(s_V)$ for a given provider shall be given as 
+
+$$
+s_V = \sqrt{\frac{1}{m} \sum_{i=1}^m (V_i - \overline{V})^2}
+$$
+
+where $m$ is the total number of visits taking place for a given provider in a given time period. In other words, the clustered variability measure is simply the standard deviation of $V$. 
+
+### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Travel Distance Per Child to Visit Location 
+* Travel Duration Per Child to Visit Location 
+* Travel Distance from Most Distal Parent to Visit Location 
+* Travel Duration from Most Distal Parent to Visit Location 
+* Time of Day for the Visit
+* Age of Children in the Visit 
+* Mode of Notification 
+* Participant Type
+* Provider
+
+# Planning Measures 
+
+In addition to the initial performance measures outlined above, the summit participants identified several "planning measures". These measures have been categorized into Potential Performance Measures (PPM), Planning Measures Only (PMO), and Potential Measures Requiring Vetting By Providers. In order to most efficiently utilize resources, these measurements contain less specificity than the measures in the previous section. Each of the measures in the first two planning measure sections contains a simple question that the measure should be able to answer, a proposed normative direction for the measure, a "Back of the Envelope definition", and a list of proposed cross-tabulation dimensions for the measure. Stakeholders are encouraged to prioritize measurements in this section that would be required during the first six months of the oliver visitation application. 
+
+## Potential Performance Measures (PPM)
+
+The measures listed in the PPM section are those measures that the summit participants identified as potential future performance measures that would require more investigation. The measures listed in the PPM section are those measures that have been identified as requiring a monitoring and refinement period prior to implementation as formal performance measures.
+
+### PPM1: Quality of Visitation Sessions
+
+The literature offers no standardized method through which visitation quality can be easily measured. Long term it may be helpful to measure visitation quality through the identification of standardized measures of parenting behavior, attachment, or other aspects of the parent-child relationship. Unfortunately, such measures would require modification to the basic visitation business processes in supported visitation sessions. As such, the summit participants proposed that a multi-year effort be undertaken to develop a measurement for visitation quality on the basis of indicators already collected during visitation sessions (e.g. the [visit report form](https://www.dshs.wa.gov/sites/default/files/FSA/forms/word/15-448.docx)). 
+
+Data collected based on the visit report form and other components of the oliver visitation application will be monitored over a 1-2 year period. During this period, efforts will be made to develop a measurement of visitation quality using a common factor model technique such as exploratory factor analysis. 
+
+### PPM2: Rate of Provider Acceptance
+
+#### Questions That This Measure Can Answer
+
+What percentage of referrals that have been submitted to a given provider are accepted by the provider? 
+
+### Normative Direction of the Measure Over Time
+
+Stable or Increasing
+
+#### Back of the Envelope Definition
+
+This measure shall be calculated by first counting the total number of accepted referrals for a provider in a given reporting period. This number will then be divided by the total number of referrals submitted to the provider during the same reporting period. Referrals submitted within 24 hours of the date of calculation shall be excluded from this measure. 
+
+#### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Travel Distance Per Child to Visit Location 
+* Travel Duration Per Child to Visit Location 
+* Travel Distance from Most Distal Parent to Visit Location 
+* Travel Duration from Most Distal Parent to Visit Location 
+* Age of Children in the Visit 
+* Participant Type
+* Provider
+
+### PPM3: Rate of Parental Reminders
+
+#### Questions That This Measure Can Answer
+
+What percentage of parents scheduled for participation have been reminded of the visit?
+
+#### Normative Direction of the Measure Over Time
+
+Stable or Increasing
+
+#### Back of the Envelope Definition
+
+This measure shall be calculated by first identifying all of the parents associated with scheduled visitations that are not canceled prior to 24 hours before the visit start time. The count of such parents for a given provider in a given reporting period will serve as the denominator in this measure. The numerator in this measure shall be the count of such parents who received some type of reminder for the visit within the 24 hours preceding the visitation. 
+
+#### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Count of Children Associated with Visitation
+* Time of day for the Visit
+* Age of Children in the Visit 
+* Mode of Notification 
+* Provider
+
+### PPM3: Percentage of Parental Visit Attendance
+
+#### Questions That This Measure Can Answer
+
+What percentage of parents who were authorized to be present at a visit actually attend the visit?
+
+#### Normative Direction of the Measure Over Time
+
+Stable or Increasing
+
+#### Back of the Envelope Definition
+
+This measure shall be calculated by first taking the difference in expected parental visitation participants (as recorded on the referral) and the parental participants who participate in a given completed visitation session. This difference shall be divided by the expected parental visitation participants and then averaged across all completed visitations for a given provider. 
+#### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Count of Children Associated with Visitation
+* Distance Per Child to Visit Location 
+* Duration Per Child to Visit Location 
+* Distance from Most Distal Parent to Visit Location 
+* Duration from Most Distal Parent to Visit Location 
+* Reason for Visit Misses 
+* Time of Day for the Visit
+* Age of Children in the Visit 
+* Mode of Notification 
+* Provider
+* Activity Fee Usage 
+
+
+### PPM4: Percentage of Child Visit Attendance
+
+#### Questions That This Measure Can Answer
+
+What percentage of children who were authorized to be present at a visit actually attend the visit?
+
+#### Normative Direction of the Measure Over Time
+
+Stable or Increasing
+
+#### Back of the Envelope Definition
+
+This measure shall be calculated by first taking the difference in expected child visitation participants (as recorded on the referral) and the child participants who participate in a given completed visitation session. This difference shall be divided by the expected child visitation participants and then averaged across all completed visitations for a given provider. 
+
+#### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Count of Children Associated with Visitation
+* Distance Per Child to Visit Location 
+* Duration Per Child to Visit Location 
+* Distance from Most Distal Parent to Visit Location 
+* Duration from Most Distal Parent to Visit Location 
+* Reason for Visit Misses 
+* Time of Day for the Visit
+* Age of Children in the Visit 
+* Mode of Notification 
+* Provider
+* Activity Fee Usage 
+
+
+### PPM5: Percentage of Planned Participants Present
+
+#### Questions That This Measure Can Answer
+
+What percentage of children who were authorized to be present at a visit actually attend the visit?
+
+#### Normative Direction of the Measure Over Time
+
+Stable or Increasing
+
+#### Back of the Envelope Definition
+
+This measure shall be calculated by first taking the sum of child and parent participants from a given completed visitation record and dividing this value by the sum of expected child and parent participants (as recorded in the referral). This proportion shall then be averaged across all completed visitations associated with a given provider.  
+
+#### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Count of Children Associated with Visitation
+* Distance Per Child to Visit Location 
+* Duration Per Child to Visit Location 
+* Distance from Most Distal Parent to Visit Location 
+* Duration from Most Distal Parent to Visit Location 
+* Reason for Visit Misses 
+* Time of day for the Visit
+* Age of Children in the Visit 
+* Mode of Notification 
+* Provider
+* Activity Fee Usage 
+
+## Planning Measures Only (PMO)
+
+Measures in the PMO section are measurements that were identified by the summit participants as containing helpful planning information but inappropriate for performance monitoring. 
+
+### PMO1: Frequency of Visitation
+
+#### Questions That This Measure Can Answer
+
+What is the average number of visitations taking place per week? 
+
+#### Back of the Envelope Definition
+
+On average, over the course of a week, the count of completed visitations associated with a given referral taking place. This measure shall be calculated by first calculating the actual frequency of completed visits for each open referral for a given provider. The results of this calculation shall then be averaged across all open referrals for a given provider. 
+
+#### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Count of Children Associated with Visitation
+* Distance Per Child to Visit Location 
+* Duration Per Child to Visit Location 
+* Distance from Most Distal Parent to Visit Location 
+* Duration from Most Distal Parent to Visit Location 
+* Reason for Visit Misses 
+* Time of day for the Visit
+* Age of Children in the Visit 
+* Mode of Notification 
+* Participant Type
+* Provider
+* Activity Fee Usage 
+
+### PMO2: Provider Incident Report Rate
+
+#### Questions That This Measure Can Answer
+
+What percentage of visitations resulted in a provider filing some sort of incident report?
+
+#### Back of the Envelope Definition
+
+This measure shall be calculated by first counting the total number of completed visitations in a given reporting period for a given provider. This number will then be divided by the total number of those visitations which resulted in an unusual incident report (UIR) or a report of child maltreatment. 
+
+#### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Count of Children Associated with Visitation
+* Distance Per Child to Visit Location 
+* Duration Per Child to Visit Location 
+* Distance from Most Distal Parent to Visit Location 
+* Duration from Most Distal Parent to Visit Location 
+* Reason for Visit Misses 
+* Time of day for the Visit
+* Age of Children in the Visit 
+* Mode of Notification 
+* Participant Type
+* Social Worker Response to Incident Report
+* Provider Incident Report Type
+* Provider
+* Activity Fee Usage 
+
+### PMO3: Rate of Service Bundling
+
+#### Questions That This Measure Can Answer
+
+What percentage of visitations were collocated with another service provider?
+
+#### Back of the Envelope Definition
+
+This measure shall be calculated by first counting the total number of completed visitations in a given reporting period for a given provider. This number will then be divided by the total number of those visitations which had at least one service provider (other than the visit supervisor) present during the visitation session. 
+
+#### Available Cross-Tabulations
+
+* Type of Visitation Supervision 
+* Type of Visitation
+* Count of Children Associated with Visitation
+* Time of day for the Visit
+* Age of Children in the Visit 
+* Participant Type
+* Provider
+
+## Potential Measures Requiring Vetting By Providers
+
+The following list of measures contains measures that summit participants identified as potentially helpful PMO measures.
+
+* Screening Report Rate - The rate at which screening reports are returned to CA. 
+
+* Planned Parental Cancellation Visit Rate - The rate of which parents cancel visits through a reason other than a no-show. 
+
+* Planned Child Cancellation visit Rate - The rate of which children or caregivers cancel visits through a reason other than failing to attend. 
+
+
+# Potential Cross-Tabulation Dimensions 
+* Type of Visitation Supervision 
+    + Supervised
+    + Monitored
+    + Transportation Only
+* Type of Visitation
+    + Sibling
+    + Relative
+    + Parent-Child
+* Count of Children Associated with Visitation
+    + One
+    + Two
+    + Three
+    + Four
+    + Five or More
+* Visitation Setting 
+    + Visitation Facility
+    + Parental Home
+    + Relative Home
+    + Community Setting
+    + Children's Administration Office
+    + Other 
+* Travel Distance Per Child to Visit Location 
+    + Less than or Equal to 40 Miles
+    + More than 40 Miles
+* Travel Duration Per Child to Visit Location 
+    + Less than or Equal to 30 Minutes
+    + Between 31 Minutes and 100 Minutes
+    + More than 100 Minutes
+* Travel Distance from Most Distal Parent to Visit Location 
+    + Less than or Equal to 40 Miles
+    + More than 40 Miles
+* Travel Duration from Most Distal Parent to Visit Location 
+    + Less than or Equal to 30 Minutes
+    + Between 31 Minutes and 100 Minutes
+    + More than 100 Minutes
+* Reason for Visit Misses 
+    + One or More Parents Canceled 24 Hours in Advance
+    + One or More Parents Failed to Attend the Visitation
+    + One or More Caregivers Canceled 24 Hours in Advance
+    + One or More Caregivers Failed to Provide Children for the Visit
+    + One or More Children Refused to Attend
+* Time of day for the Visit
+    + Morning
+    + Afternoon
+    + Evening
+* Age of children in the Visit 
+    + All Children Under 6
+    + All Children Between 6 and 17
+    + At Least one child Under 6 AND One Child Between 6 and 17
+* Mode of Notification 
+    + Email
+    + Facebook Messenger
+    + Facetime
+    + Google Hangout
+    + Kik
+    + None
+    + Phone
+    + Skype
+    + SMS Text Message
+    + Snapchat
+    + Tumblr
+* Participant Type
+    + Additional Provider
+    + CASA
+    + Child
+    + CPA Worker
+    + Family Member
+    + Foster Parent
+    + Foster Parent
+    + GAL
+    + Guardian
+    + Parent
+    + Sibling
+* Social Worker Response to Incident Report
+    + Yes
+    + No
+* Provider Incident Report Type
+    + Child Maltreatment
+    + Unusual Incident Report (UIR)
+* Activity Fee Usage 
+    + All
+    + Some
+    + None
+* Provider

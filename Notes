@@ -1,0 +1,272 @@
+2. Percentage of referred visits scheduled
+
+select 
+    cd.state_fiscal_quarter_name
+    ,vtd.tx_super_type
+    ,vtd.tx_type
+    ,vrf.QT_CHILD_COUNT
+    ,vasd.tx_sib_age_grp
+    ,vrf.id_provider_dim 
+    ,count(distinct vf.id_visitation_referral_fact)*100.0/count(vrf.id_visitation_referral_fact) perc_ref_sched
+from visitation_referral_fact vrf
+    left join visitation_fact vf
+        on vrf.id_visitation_referral_fact = vf.id_visitation_referral_fact
+            and vf.id_calendar_dim_setup !=0
+    join calendar_dim cd 
+        on vrf.id_calendar_dim = cd.id_calendar_dim_rcvd
+    join visitation_type_dim vtd
+        on vf.id_visitation_type_dim = vtd.id_visitation_type_dim
+    join visitation_sibling_age_dim vsad
+        on vf.id_visitation_sibling_age_dim = vsad.id_visitation_sibling_age_dim
+where 
+    vrf.fl_accepted = 1
+    and IntDate_to_CalDate(cd.id_calendar_dim_rcvd) < dateadd(dd, -7, getdate())   
+group by
+    cd.state_fiscal_quarter_name
+    ,vtd.tx_super_type
+    ,vtd.tx_type
+    ,vrf.QT_CHILD_COUNT
+    ,vasd.tx_sib_age_grp
+    ,vrf.id_provider_dim 
+
+3. Variance in visitation timing (need to collect data on this first) 
+
+with avg_visit_start_time as
+(
+select
+    vf.id_visitation_referral_fact     
+    ,avg(cast(cast(vf.time_visit_start_hours as varchar(2)) + cast(vf.time_visit_start_minutes as varchar(2)) as int)) avg_visit_start
+from visitation_fact vf
+where vf.id_calendar_dim_setup != 0
+group by 
+    vfo.id_visitation_referral_fact
+), visit_start_time as
+(
+select
+    vf.id_visitation_referral_fact
+    ,vf.id_visitation_fact 
+    ,cast(cast(vf.time_visit_start_hours as varchar(2)) + cast(vf.time_visit_start_minutes as varchar(2)) as int) visit_start_i        
+from visitation_fact vf
+)
+select 
+    cd.state_fiscal_quarter_name
+    ,vtd.tx_super_type
+    ,vtd.tx_type
+    ,vrf.QT_CHILD_COUNT
+    ,vltd.tx_location_type
+    ,dur.tx_visitation_trvl_duration_parent
+    ,dis.tx_visitation_trvl_distance_parent
+    ,dur.tx_visitation_trvl_duration_child
+    ,dis.tx_visitation_trvl_distance_child
+    ,vtdd.tx_visitation_time_of_day
+    ,vasd.tx_sib_age_grp
+    ,vrf.id_provider_dim 
+    ,((1/count(vst.id_visitation_fact))*1.0)*sum(visit_start_i - avg_visit_start)^2 visit_start_variance
+from visit_start_time vst
+    join avg_visit_start_time avst
+        on vst.id_visitation_referral_fact = avst.id_visitation_referral_fact
+    join visitation_fact vf
+        on vst.id_visitation_fact = vf.id_visitation_fact
+    join visitation_referral_fact vrf
+        on vf.id_visitation_referral_fact = vrf.id_visitation_referral_fact 
+    join calendar_dim cd 
+        on vrf.id_calendar_dim = cd.id_calendar_dim_rcvd
+    join visitation_trvl_duration_dim dur 
+        on vf.id_visitation_trvl_duration_dim = dur.id_visitation_trvl_duration_dim
+    join visitation_trvl_distance_dim dis 
+        on vf.id_visitation_trvl_distance_dim = dis.id_visitation_trvl_distance_dim
+    join visitation_type_dim vtd
+        on vf.id_visitation_type_dim = vtd.id_visitation_type_dim
+    join visitation_sibling_age_dim vsad
+        on vf.id_visitation_sibling_age_dim = vsad.id_visitation_sibling_age_dim
+    join visitation_time_of_day_dim vtdd
+        on vf.id_visitation_time_of_day_dim = vtdd.id_visitation_time_of_day_dim
+    join visitation_location_type_dim vltd
+        on vf.id_visitation_location_type_dim = vltd.id_visitation_location_type_dim
+group by 
+    cd.state_fiscal_quarter_name
+    ,vtd.tx_super_type
+    ,vtd.tx_type
+    ,vrf.QT_CHILD_COUNT
+    ,vltd.tx_location_type
+    ,dur.tx_visitation_trvl_duration_parent
+    ,dis.tx_visitation_trvl_distance_parent
+    ,dur.tx_visitation_trvl_duration_child
+    ,dis.tx_visitation_trvl_distance_child
+    ,vtdd.tx_visitation_time_of_day
+    ,vasd.tx_sib_age_grp
+    ,vrf.id_provider_dim 
+    --need to add visitation mode here 
+    
+
+### Planning Measures 
+1. Frequency of visitation
+
+with visitations_per_week as
+(
+select
+    cd.state_fiscal_quarter_name
+    ,cd.state_fiscal_week_name
+    ,count(vf.id_visitation_referral_fact) visitations_per_week
+from calendar_dim cd
+    join visitation_fact vf
+        on cd.id_calendar_dim = vf.id_calendar_dim_visit
+            and vf.id_calendar_dim_visit != 0
+group by 
+    cd.state_fiscal_quarter_name
+    ,cd.state_fiscal_week_name
+)
+select
+    cd.state_fiscal_quarter_name
+    ,avg(vpw.visitations_per_week) avg_visitations_per_week
+from visitations_per_week vpw
+group by 
+    cd.state_fiscal_quarter_name
+
+Additional cross tabulations shall include
+
+1. Type of visitation supervision (supervised vs. monitored vs. transportation only) 
+2. Type of visitation (sibling vs. relative vs. parent-child) 
+3. Sibling group size 
+4. Visitation setting 
+5. Distance OR time from child to visit location 
+6. Distance OR time from parent to visit location 
+8. Time of day for the visit 
+9. Age of children in the visit 
+10. Mode of notification 
+11. Provider
+
+
+2. Time from removal to first visitation
+
+with first_visit_setup as
+(
+select 
+    min(vf.id_calendar_dim_setup) dt_visit_setup_first
+    ,vf.id_visitation_referral_fact
+from visitation_fact vf
+having
+    min(vf.id_calendar_dim_setup) != 0
+group by 
+    vf.id_visitation_referral_fact    
+)
+select 
+    cd.state_fiscal_quarter_name
+    ,avg(datediff(dd, IntDate_to_CalDate(ref.calendar_dim_begin), IntDate_to_CalDate(vf.id_calendar_dim_setup))) avg_time_to_setup
+from visitation_fact vf
+    join first_visit_setup fvs
+        on vf.id_visitation_referral_fact = fvs.id_visitation_referral_fact
+            and vf.dt_visit_setup_first = fvs.id_calendar_dim_setup
+    join visitation_referral_fact vrf
+        on vf.id_visitation_referral_fact = vrf.id_visitation_referral_fact 
+            and vrf.fl_accepted = 1
+    join removal_episode_fact ref
+        on ref.id_removal_episode_fact = vrf.id_removal_episode_fact_min
+    join calendar_dim cd 
+        on vrf.id_calendar_dim = cd.id_calendar_dim_rcvd
+group by 
+    cd.state_fiscal_quarter_name
+
+Additional cross tabulations shall include 
+
+1. Type of visitation supervision (supervised vs. monitored vs. transportation only) 
+2. Type of visitation (sibling vs. relative vs. parent-child) 
+3. Sibling group size 
+4. Visitation setting 
+5. Distance OR time from child to visit location 
+6. Distance OR time from parent to visit location 
+8. Time of day for the visit 
+9. Age of children in the visit 
+11. Provider
+
+
+3. Parental missed visit rate (maybe a future performance measure)
+
+select  
+    cd.state_fiscal_quarter_name
+    ,sum(vrf.qt_parent_count - vf.qt_parent_count)*100.0/sum(vrf.qt_parent_count) 
+from calendar_dim cd
+    join visitation_fact vf
+        on cd.id_calendar_dim_visit = vf.id_calendar_dim 
+    join visitation_referral_fact vrf
+        on vf.id_visitation_referral_fact = vrf.id_visitation_referral_fact 
+group by 
+    cd.state_fiscal_quarter_name    
+
+4. Child missed visit rate (maybe a future performance measure)  
+
+select  
+    cd.state_fiscal_quarter_name
+    ,sum(vrf.qt_child_count - vf.qt_child_count)*100.0/sum(vrf.qt_child_count) 
+from calendar_dim cd
+    join visitation_fact vf
+        on cd.id_calendar_dim_visit = vf.id_calendar_dim 
+    join visitation_referral_fact vrf
+        on vf.id_visitation_referral_fact = vrf.id_visitation_referral_fact 
+group by 
+    cd.state_fiscal_quarter_name    
+    
+    
+5. Percentage of planned participants present (maybe a future performance measure)
+
+select  
+    cd.state_fiscal_quarter_name
+    ,sum(vf.qt_child_count + vf.qt_parent_count)*100.0/sum(vrf.qt_child_count + vrf.qt_parent_count) perc_plan_participants
+from calendar_dim cd
+    join visitation_fact vf
+        on cd.id_calendar_dim_visit = vf.id_calendar_dim 
+    join visitation_referral_fact vrf
+        on vf.id_visitation_referral_fact = vrf.id_visitation_referral_fact 
+group by 
+    cd.state_fiscal_quarter_name    
+
+6. Quality of visitations (2 year burn in process) 
+
+
+
+9. Provider acceptance rate
+
+select 
+    cd.state_fiscal_quarter_name
+    ,sum(vrf.fl_accepted)*100.0/count(vrf.id_visitation_referral_fact) acceptance_rate
+from calendar_dim cd
+    join visitation_referral_fact vrf
+        on cd.id_calendar_dim = vrf.id_calendar_dim_rcvd
+group by 
+    cd.state_fiscal_quarter_name    
+
+10. Screening report rate (sending and delivery) 
+
+11. Planned Parental cancelation visit rate (ask providers)  
+
+12. Planned Child cancelation visit rate (ask providers)
+
+13. Party 24hr notification rate (maybe a future performance measure)
+
+14. Rate of service bundling (i.e. colocation of more than one provider) 
+
+7. UIR and Abuse Referral Rates 
+
+8. Rate of SW Callback 
+
+
+#### Cross-tabulations
+
+1. Type of visitation supervision (supervised vs. monitored vs. transportation only) 
+2. Type of visitation (sibling vs. relative vs. parent-child) 
+3. Sibling group size 
+4. Visitation setting 
+5. Distance OR time from child to visit location 
+6. Distance OR time from parent to visit location 
+7. Reason for visit misses 
+8. Time of day for the visit 
+9. Age of children in the visit 
+10. Mode of notification 
+11. Provider
+12. Timing of Reports to CA (CAN go to Intake, UIRs goes to worker) 
+13. Activity fee usage 
+
+#### Multiyear goals
+1. Delta per dollar 
+2. Assess the connection between visitation performance measures and CFSR-style outcomes
+3. Assess the connection between provider and planning measure outcomes 
